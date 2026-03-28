@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BildFlow - منشئ التصاميم الاحترافي</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-canvas: #f1f5f9;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* الشريط العلوي */
+        .top-bar {
+            height: 60px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: relative;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-dark);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
+        /* الحاوية الرئيسية */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+
+        /* الشريط الجانبي للأدوات */
+        .tools-sidebar {
+            width: 80px;
+            background: var(--bg-panel);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 8px;
+        }
+
+        .tool-item {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+            position: relative;
+        }
+
+        .tool-item:hover, .tool-item.active {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .tool-item i {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .tool-item span {
+            font-size: 11px;
+        }
+
+        /* لوحة الأدوات الموسعة */
+        .tools-panel {
+            width: 300px;
+            background: var(--bg-panel);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .panel-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        /* عناصر التصميم */
+        .elements-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .element-item {
+            aspect-ratio: 1;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 28px;
+        }
+
+        .element-item:hover {
+            border-color: var(--primary);
+            transform: scale(1.05);
+            background: var(--bg-panel);
+        }
+
+        .shape-circle { border-radius: 50%; }
+        .shape-rounded { border-radius: 20%; }
+        
+        /* مساحة العمل */
+        .workspace {
+            flex: 1;
+            background: var(--bg-canvas);
+            position: relative;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        }
+
+        .canvas {
+            width: 800px;
+            height: 600px;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* العناصر على الكانفاس */
+        .canvas-element {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            transition: box-shadow 0.2s;
+        }
+
+        .canvas-element.selected {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .canvas-element:hover {
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+        }
+
+        /* مقابض التحجيم */
+        .resize-handles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none;
+        }
+
+        .canvas-element.selected .resize-handles {
+            display: block;
+        }
+
+        .handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            pointer-events: all;
+            cursor: pointer;
+        }
+
+        .handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
+        .handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
+        .handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+        .handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
+        .handle.n { top: -6px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+        .handle.s { bottom: -6px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+        .handle.w { left: -6px; top: 50%; transform: translateY(-50%); cursor: w-resize; }
+        .handle.e { right: -6px; top: 50%; transform: translateY(-50%); cursor: e-resize; }
+
+        /* شريط الخصائص */
+        .properties-panel {
+            width: 280px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+        }
+
+        .property-group {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .property-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .property-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .property-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .property-col {
+            flex: 1;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .color-presets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .color-preset {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
+        }
+
+        .color-preset:hover {
+            transform: scale(1.2);
+            border-color: white;
+        }
+
+        /* تأثيرات النص */
+        .text-effects {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .effect-btn {
+            padding: 6px 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .effect-btn:hover, .effect-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* أنماط محددة */
+        .hidden { display: none !important; }
+        
+        /* الأشكال */
+        .shape-rect { border-radius: 0; }
+        .shape-circle { border-radius: 50%; }
+        .shape-triangle {
+            width: 0;
+            height: 0;
+            border-left: 50px solid transparent;
+            border-right: 50px solid transparent;
+            border-bottom: 100px solid currentColor;
+        }
+
+        /* الرسوم المتحركة */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .animate-fade { animation: fadeIn 0.3s ease; }
+        .animate-slide { animation: slideIn 0.3s ease; }
+
+        /* تصنيفات الأدوات */
+        .tool-category {
+            margin-bottom: 24px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 10px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .category-content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        /* أيقونات Font Awesome */
+        .icon { font-style: normal; }
+        
+        /* شريط التمرير المخصص */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* أزرار الطبقات */
+        .layer-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .layer-btn {
+            flex: 1;
+            padding: 8px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .layer-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* معاينة الخط */
+        .font-preview {
+            padding: 10px;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            margin-top: 8px;
+            font-size: 18px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        /* شبكة المساعدة */
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .grid-overlay.visible {
+            opacity: 1;
+        }
+
+        /* قياسات العنصر */
+        .dimensions {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .canvas-element.selected .dimensions {
+            opacity: 1;
+        }
+
+        /* أنماط العناصر الجاهزة */
+        .style-presets {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .style-preset {
+            min-width: 80px;
+            height: 80px;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .style-preset:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* مؤشرات المحاذاة */
+        .alignment-guides {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .guide-line {
+            position: absolute;
+            background: var(--primary);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .guide-line.visible {
+            opacity: 0.5;
+        }
+
+        .guide-h {
+            width: 100%;
+            height: 1px;
+        }
+
+        .guide-v {
+            width: 1px;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- الشريط العلوي -->
+    <div class="top-bar">
+        <div class="logo">
+            <span>◆</span>
+            <span>BildFlow</span>
+        </div>
+        <div style="flex: 1; text-align: center;">
+            <input type="text" value="مشروع تصميم جديد" style="background: transparent; border: none; color: var(--text-primary); font-size: 16px; text-align: center; outline: none;">
+        </div>
+        <div class="top-actions">
+            <button class="btn btn-secondary" onclick="undo()">↩ تراجع</button>
+            <button class="btn btn-secondary" onclick="redo()">↪ إعادة</button>
+            <button class="btn btn-secondary" onclick="toggleGrid()">⊞ الشبكة</button>
+            <button class="btn btn-primary" onclick="exportDesign()">⬇ تصدير</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- الشريط الجانبي للأدوات -->
+        <div class="tools-sidebar">
+            <div class="tool-item active" onclick="switchTool('elements')" data-tool="elements">
+                <span class="icon">🧩</span>
+                <span>عناصر</span>
+            </div>
+            <div class="tool-item" onclick="switchTool('text')" data-tool="text">
+                <span class="icon">T</span>
+                <span>نص</span>
+            </div>
+            <div class="tool-item" onclick="switchTool('images')" data-tool="images">
+                <span class="icon">🖼</span>
+                <span>صور</span>
+            </div>
+            <div class="tool-item" onclick="switchTool('uploads')" data-tool="uploads">
+                <span class="icon">⬆</span>
+                <span>رفع</span>
+            </div>
+            <div class="tool-item" onclick="switchTool('backgrounds')" data-tool="backgrounds">
+                <span class="icon">🎨</span>
+                <span>خلفية</span>
+            </div>
+            <div class="tool-item" onclick="switchTool('audio')" data-tool="audio">
+                <span class="icon">🎵</span>
+                <span>صوت</span>
+            </div>
+        </div>
+
+        <!-- لوحة الأدوات الموسعة -->
+        <div class="tools-panel" id="toolsPanel">
+            <!-- عناصر -->
+            <div id="panel-elements" class="panel-section">
+                <div class="panel-header">العناصر</div>
+                <div class="panel-content">
+                    <!-- الأشكال -->
+                    <div class="tool-category">
+                        <div class="category-header" onclick="toggleCategory(this)">
+                            <span>🔷 الأشكال</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="category-content">
+                            <div class="element-item" onclick="addShape('rect')" title="مربع">⬛</div>
+                            <div class="element-item" onclick="addShape('circle')" title="دائرة">⭕</div>
+                            <div class="element-item" onclick="addShape('triangle')" title="مثلث">🔺</div>
+                            <div class="element-item" onclick="addShape('rounded')" title="زوايا دائرية">⬜</div>
+                            <div class="element-item" onclick="addShape('hexagon')" title="سداسي">⬡</div>
+                            <div class="element-item" onclick="addShape('star')" title="نجمة">⭐</div>
+                        </div>
+                    </div>
+
+                    <!-- الأيقونات -->
+                    <div class="tool-category">
+                        <div class="category-header" onclick="toggleCategory(this)">
+                            <span>🎯 أيقونات</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="category-content">
+                            <div class="element-item" onclick="addIcon('home')">🏠</div>
+                            <div class="element-item" onclick="addIcon('user')">👤</div>
+                            <div class="element-item" onclick="addIcon('heart')">❤️</div>
+                            <div class="element-item" onclick="addIcon('star')">⭐</div>
+                            <div class="element-item" onclick="addIcon('mail')">✉️</div>
+                            <div class="element-item" onclick="addIcon('phone')">📞</div>
+                        </div>
+                    </div>
+
+                    <!-- الإطارات -->
+                    <div class="tool-category">
+                        <div class="category-header" onclick="toggleCategory(this)">
+                            <span>🖼️ إطارات</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="category-content">
+                            <div class="element-item" onclick="addFrame('rect')">▭</div>
+                            <div class="element-item" onclick="addFrame('circle')">◯</div>
+                            <div class="element-item" onclick="addFrame('phone')">📱</div>
+                            <div class="element-item" onclick="addFrame('laptop')">💻</div>
+                        </div>
+                    </div>
+
+                    <!-- الرسومات -->
+                    <div class="tool-category">
+                        <div class="category-header" onclick="toggleCategory(this)">
+                            <span>🎨 رسومات</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="category-content">
+                            <div class="element-item" onclick="addIllustration('flat')">🎭</div>
+                            <div class="element-item" onclick="addIllustration('3d')">🎪</div>
+                            <div class="element-item" onclick="addIllustration('hand')">✍️</div>
+                            <div class="element-item" onclick="addIllustration('iso')">🏢</div>
+                        </div>
+                    </div>
+
+                    <!-- الملصقات -->
+                    <div class="tool-category">
+                        <div class="category-header" onclick="toggleCategory(this)">
+                            <span>🎟️ ملصقات</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="category-content">
+                            <div class="element-item" onclick="addSticker('emoji')">😀</div>
+                            <div class="element-item" onclick="addSticker('social')">👍</div>
+                            <div class="element-item" onclick="addSticker('decorative')">✨</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- نص -->
+            <div id="panel-text" class="panel-section hidden">
+                <div class="panel-header">النصوص</div>
+                <div class="panel-content">
+                    <button class="btn btn-primary" style="width: 100%; margin-bottom: 20px;" onclick="addText()">+ إضافة نص</button>
+                    
+                    <div class="tool-category">
+                        <div class="category-header">
+                            <span>✨ أنماط جاهزة</span>
+                        </div>
+                        <div class="style-presets">
+                            <div class="style-preset" onclick="addTextStyle('heading')" style="font-size: 24px; font-weight: bold;">عنوان</div>
+                            <div class="style-preset" onclick="addTextStyle('subheading')" style="font-size: 18px;">عنوان فرعي</div>
+                            <div class="style-preset" onclick="addTextStyle('body')" style="font-size: 14px;">نص عادي</div>
+                        </div>
+                    </div>
+
+                    <div class="tool-category">
+                        <div class="category-header">
+                            <span>📝 الخطوط</span>
+                        </div>
+                        <select class="property-input" onchange="changeFont(this.value)">
+                            <option value="Arial">Arial</option>
+                            <option value="Tahoma">Tahoma</option>
+                            <option value="Segoe UI">Segoe UI</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Courier New">Courier New</option>
+                        </select>
+                        <div class="font-preview" id="fontPreview">نص تجريبي</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- صور -->
+            <div id="panel-images" class="panel-section hidden">
+                <div class="panel-header">الصور</div>
+                <div class="panel-content">
+                    <div class="tool-category">
+                        <div class="category-header">
+                            <span>🖼️ مكتبة الصور</span>
+                        </div>
+                        <div class="elements-grid">
+                            <div class="element-item" style="background: linear-gradient(45deg, #ff6b6b, #4ecdc4);"></div>
+                            <div class="element-item" style="background: linear-gradient(45deg, #667eea, #764ba2);"></div>
+                            <div class="element-item" style="background: linear-gradient(45deg, #f093fb, #f5576c);"></div>
+                            <div class="element-item" style="background: linear-gradient(45deg, #4facfe, #00f2fe);"></div>
+                            <div class="element-item" style="background: linear-gradient(45deg, #43e97b, #38f9d7);"></div>
+                            <div class="element-item" style="background: linear-gradient(45deg, #fa709a, #fee140);"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-category">
+                        <div class="category-header">
+                            <span>🤳 رفع صورة</span>
+                        </div>
+                        <div style="border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer;" onclick="document.getElementById('imageInput').click()">
+                            <div style="font-size: 48px; margin-bottom: 10px;">📤</div>
+                            <div>اسحب الصورة هنا أو انقر للرفع</div>
+                            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- خلفيات -->
+            <div id="panel-backgrounds" class="panel-section hidden">
+                <div class="panel-header">الخلفيات</div>
+                <div class="panel-content">
+                    <div class="tool-category">
+                        <div class="category-header">
+                            <span>🎨 ألوان ثابتة</span>
+                        </div>
+                        <div class="color-presets">
+                            <div class="color-preset" style="background: #ffffff;" onclick="setBackground('#ffffff')"></div>
+                            <div class="color-preset" style="background: #000000;" onclick="setBackground('#000000')"></div>
+                            <div class="color-preset" style="background: #ff6b6b;" onclick="setBackground('#ff6b6b')"></div>
+                            <div class="color-preset" style="background: #4ecdc4;" onclick="setBackground('#4ecdc4')"></div>
+                            <div class="color-preset" style="background: #667eea;" onclick="setBackground('#667eea')"></div>
+                            <div class="color-preset" style="background: #f093fb;" onclick="setBackground('#f093fb')"></div>
+                        </div>
+                    </div>
+
+                    <div class="tool-category">
+                        <div class="category-header">
+                            <span>🌈 تدرجات</span>
+                        </div>
+                        <div class="elements-grid">
+                            <div class="element-item" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="setBackground('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')"></div>
+                            <div class="element-item" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" onclick="setBackground('linear-gradient(135deg, #f093fb 0%, #f5576c 100%)')"></div>
+                            <div class="element-item" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);" onclick="setBackground('linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)')"></div>
+                            <div class="element-item" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);" onclick="setBackground('linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)')"></div>
+                        </div>
+                    </div>
+
+                    <div class="tool-category">
+                        <div class="category-header">
+                            <span>🖼️ أنماط</span>
+                        </div>
+                        <div class="elements-grid">
+                            <div class="element-item" style="background: repeating-linear-gradient(45deg, #606dbc, #606dbc 10px, #465298 10px, #465298 20px);" onclick="setBackground('repeating-linear-gradient(45deg, #606dbc, #606dbc 10px, #465298 10px, #465298 20px)')"></div>
+                            <div class="element-item" style="background: radial-gradient(circle, #ff6b6b 20%, transparent 20%), radial-gradient(circle, #4ecdc4 20%, transparent 20%) 50px 50px; background-size: 100px 100px; background-color: #f0f0f0;" onclick="setBackgroundPattern()"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- لوحات أخرى -->
+            <div id="panel-uploads" class="panel-section hidden">
+                <div class="panel-header">الملفات المرفوعة</div>
+                <div class="panel-content">
+                    <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">📁</div>
+                        <div>لا توجد ملفات مرفوعة بعد</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-audio" class="panel-section hidden">
+                <div class="panel-header">الصوت والفيديو</div>
+                <div class="panel-content">
+                    <div class="tool-category">
+                        <div class="category-header">
+                            <span>🎵 موسيقى</span>
+                        </div>
+                        <div class="elements-grid">
+                            <div class="element-item">🎵</div>
+                            <div class="element-item">🎶</div>
+                            <div class="element-item">🎼</div>
+                            <div class="element-item">🎸</div>
+                        </div>
+                    </div>
+                    <div class="tool-category">
+                        <div class="category-header">
+                            <span>🎬 فيديو</span>
+                        </div>
+                        <div class="elements-grid">
+                            <div class="element-item">🎬</div>
+                            <div class="element-item">📹</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- مساحة العمل -->
+        <div class="workspace" id="workspace">
+            <div class="canvas-container">
+                <div class="canvas" id="canvas">
+                    <div class="grid-overlay" id="gridOverlay"></div>
+                    <div class="alignment-guides" id="alignmentGuides"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- شريط الخصائص -->
+        <div class="properties-panel" id="propertiesPanel">
+            <div class="panel-header">الخصائص</div>
+            <div class="panel-content" id="propertiesContent">
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                    اختر عنصراً للتعديل
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedElement = null;
+        let elementCounter = 0;
+        let isDragging = false;
+        let isResizing = false;
+        let currentHandle = null;
+        let startX, startY, startWidth, startHeight, startLeft, startTop;
+        let history = [];
+        let historyStep = -1;
+
+        // تبديل الأدوات
+        function switchTool(tool) {
+            // تحديث الأيقونات النشطة
+            document.querySelectorAll('.tool-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-tool="${tool}"]`).classList.add('active');
+
+            // إظهار اللوحة المناسبة
+            document.querySelectorAll('.panel-section').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById(`panel-${tool}`).classList.remove('hidden');
+        }
+
+        // تبديل فئات الأدوات
+        function toggleCategory(header) {
+            const content = header.nextElementSibling;
+            const arrow = header.querySelector('span:last-child');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'grid';
+                arrow.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                arrow.textContent = '▶';
+            }
+        }
+
+        // إضافة شكل
+        function addShape(type) {
+            const canvas = document.getElementById('canvas');
+            const element = document.createElement('div');
+            element.className = 'canvas-element';
+            element.id = `element-${++elementCounter}`;
+            
+            const size = 100;
+            const x = (canvas.offsetWidth - size) / 2;
+            const y = (canvas.offsetHeight - size) / 2;
+            
+            element.style.left = x + 'px';
+            element.style.top = y + 'px';
+            element.style.width = size + 'px';
+            element.style.height = size + 'px';
+            
+            if (type === 'triangle') {
+                element.style.width = '0';
+                element.style.height = '0';
+                element.style.borderLeft = '50px solid transparent';
+                element.style.borderRight = '50px solid transparent';
+                element.style.borderBottom = `100px solid #6366f1`;
+                element.style.background = 'transparent';
+            } else if (type === 'hexagon') {
+                element.style.background = '#6366f1';
+                element.style.clipPath = 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)';
+            } else if (type === 'star') {
+                element.style.background = '#6366f1';
+                element.style.clipPath = 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
+            } else {
+                element.style.background = '#6366f1';
+                if (type === 'circle') {
+                    element.style.borderRadius = '50%';
+                } else if (type === 'rounded') {
+                    element.style.borderRadius = '20px';
+                }
+            }
+            
+            element.dataset.type = 'shape';
+            element.dataset.shapeType = type;
+            
+            addResizeHandles(element);
+            canvas.appendChild(element);
+            selectElement(element);
+            saveHistory();
+        }
+
+        // إضافة أيقونة
+        function addIcon(type) {
+            const canvas = document.getElementById('canvas');
+            const element = document.createElement('div');
+            element.className = 'canvas-element';
+            element.id = `element-${++elementCounter}`;
+            
+            const icons = {
+                home: '🏠',
+                user: '👤',
+                heart: '❤️',
+                star: '⭐',
+                mail: '✉️',
+                phone: '📞'
+            };
+            
+            element.innerHTML = icons[type] || '⭐';
+            element.style.fontSize = '60px';
+            element.style.left = '350px';
+            element.style.top = '250px';
+            element.dataset.type = 'icon';
+            
+            addResizeHandles(element);
+            canvas.appendChild(element);
+            selectElement(element);
+            saveHistory();
+        }
+
+        // إضافة إطار
+        function addFrame(type) {
+            const canvas = document.getElementById('canvas');
+            const element = document.createElement('div');
+            element.className = 'canvas-element';
+            element.id = `element-${++elementCounter}`;
+            
+            element.style.width = '200px';
+            element.style.height = '150px';
+            element.style.left = '300px';
+            element.style.top = '225px';
+            element.style.border = '3px solid #334155';
+            element.style.background = '#f1f5f9';
+            
+            if (type === 'circle') {
+                element.style.borderRadius = '50%';
+            } else if (type === 'phone') {
+                element.style.borderRadius = '20px';
+                element.style.width = '120px';
+                element.style.height = '220px';
+            } else if (type === 'laptop') {
+                element.style.borderRadius = '10px';
+                element.style.width = '280px';
+                element.style.height = '180px';
+            }
+            
+            element.dataset.type = 'frame';
+            
+            addResizeHandles(element);
+            canvas.appendChild(element);
+            selectElement(element);
+            saveHistory();
+        }
+
+        // إضافة رسم
+        function addIllustration(style) {
+            const canvas = document.getElementById('canvas');
+            const element = document.createElement('div');
+            element.className = 'canvas-element';
+            element.id = `element-${++elementCounter}`;
+            
+            element.style.width = '150px';
+            element.style.height = '150px';
+            element.style.left = '325px';
+            element.style.top = '225px';
+            
+            const colors = {
+                flat: '#4ecdc4',
+                '3d': '#ff6b6b',
+                hand: '#ffe66d',
+                iso: '#95e1d3'
+            };
+            
+            element.style.background = colors[style] || '#4ecdc4';
+            element.style.borderRadius = style === 'flat' ? '0' : '20px';
+            
+            if (style === 'iso') {
+                element.style.transform = 'rotateX(60deg) rotateZ(-45deg)';
+            }
+            
+            element.dataset.type = 'illustration';
+            
+            addResizeHandles(element);
+            canvas.appendChild(element);
+            selectElement(element);
+            saveHistory();
+        }
+
+        // إضافة ملصق
+        function addSticker(type) {
+            const canvas = document.getElementById('canvas');
+            const element = document.createElement('div');
+            element.className = 'canvas-element';
+            element.id = `element-${++elementCounter}`;
+            
+            const stickers = {
+                emoji: '😀',
+                social: '👍',
+                decorative: '✨'
+            };
+            
+            element.innerHTML = stickers[type] || '✨';
+            element.style.fontSize = '80px';
+            element.style.left = '360px';
+            element.style.top = '260px';
+            element.dataset.type = 'sticker';
+            
+            addResizeHandles(element);
+            canvas.appendChild(element);
+            selectElement(element);
+            saveHistory();
+        }
+
+        // إضافة نص
+        function addText() {
+            const canvas = document.getElementById('canvas');
+            const element = document.createElement('div');
+            element.className = 'canvas-element';
+            element.id = `element-${++elementCounter}`;
+            
+            element.innerHTML = 'اكتب هنا';
+            element.style.fontSize = '32px';
+            element.style.color = '#0f172a';
+            element.style.fontFamily = 'Arial';
+            element.style.left = '350px';
+            element.style.top = '280px';
+            element.style.padding = '10px';
+            element.contentEditable = true;
+            element.dataset.type = 'text';
+            
+            addResizeHandles(element);
+            canvas.appendChild(element);
+            selectElement(element);
+            saveHistory();
+        }
+
+        // إضافة نمط نص
+        function addTextStyle(style) {
+            const canvas = document.getElementById('canvas');
+            const element = document.createElement('div');
+            element.className = 'canvas-element';
+            element.id = `element-${++elementCounter}`;
+            
+            const styles = {
+                heading: { size: '48px', weight: 'bold', text: 'عنوان رئيسي' },
+                subheading: { size: '32px', weight: '600', text: 'عنوان فرعي' },
+                body: { size: '18px', weight: 'normal', text: 'نص عادي للقراءة' }
+            };
+            
+            const s = styles[style];
+            element.innerHTML = s.text;
+            element.style.fontSize = s.size;
+            element.style.fontWeight = s.weight;
+            element.style.color = '#0f172a';
+            element.style.left = '300px';
+            element.style.top = '280px';
+            element.style.padding = '10px';
+            element.contentEditable = true;
+            element.dataset.type = 'text';
+            
+            addResizeHandles(element);
+            canvas.appendChild(element);
+            selectElement(element);
+            saveHistory();
+        }
+
+        // مقابض التحجيم
+        function addResizeHandles(element) {
+            const handles = document.createElement('div');
+            handles.className = 'resize-handles';
+            
+            const positions = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'];
+            positions.forEach(pos => {
+                const handle = document.createElement('div');
+                handle.className = `handle ${pos}`;
+                handle.addEventListener('mousedown', (e) => startResize(e, element, pos));
+                handles.appendChild(handle);
+            });
+            
+            const dimensions = document.createElement('div');
+            dimensions.className = 'dimensions';
+            handles.appendChild(dimensions);
+            
+            element.appendChild(handles);
+            
+            element.addEventListener('mousedown', (e) => startDrag(e, element));
+        }
+
+        // اختيار عنصر
+        function selectElement(element) {
+            document.querySelectorAll('.canvas-element').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            if (element) {
+                element.classList.add('selected');
+                selectedElement = element;
+                updatePropertiesPanel();
+            } else {
+                selectedElement = null;
+                document.getElementById('propertiesContent').innerHTML = `
+                    <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                        اختر عنصراً للتعديل
+                    </div>
+                `;
+            }
+        }
+
+        // تحديث لوحة الخصائص
+        function updatePropertiesPanel() {
+            if (!selectedElement) return;
+            
+            const type = selectedElement.dataset.type;
+            const computedStyle = window.getComputedStyle(selectedElement);
+            
+            let html = '';
+            
+            // الحجم والموقع
+            html += `
+                <div class="property-group">
+                    <div class="section-title">الحجم والموقع</div>
+                    <div class="property-row">
+                        <div class="property-col">
+                            <label class="property-label">العرض</label>
+                            <input type="number" class="property-input" id="prop-width" 
+                                value="${parseInt(selectedElement.style.width) || selectedElement.offsetWidth}" 
+                                onchange="updateElementSize('width', this.value)">
+                        </div>
+                        <div class="property-col">
+                            <label class="property-label">الطول</label>
+                            <input type="number" class="property-input" id="prop-height" 
+                                value="${parseInt(selectedElement.style.height) || selectedElement.offsetHeight}" 
+                                onchange="updateElementSize('height', this.value)">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-col">
+                            <label class="property-label">X</label>
+                            <input type="number" class="property-input" 
+                                value="${parseInt(selectedElement.style.left) || 0}" 
+                                onchange="updateElementPos('left', this.value)">
+                        </div>
+                        <div class="property-col">
+                            <label class="property-label">Y</label>
+                            <input type="number" class="property-input" 
+                                value="${parseInt(selectedElement.style.top) || 0}" 
+                                onchange="updateElementPos('top', this.value)">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-col">
+                            <label class="property-label">دوران</label>
+                            <input type="range" min="0" max="360" value="0" 
+                                onchange="updateElementRotation(this.value)">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // اللون والمظهر
+            if (type !== 'text' && type !== 'icon' && type !== 'sticker') {
+                html += `
+                    <div class="property-group">
+                        <div class="section-title">اللون والمظهر</div>
+                        <label class="property-label">لون الخلفية</label>
+                        <input type="color" value="${rgbToHex(computedStyle.backgroundColor) || '#6366f1'}" 
+                            onchange="updateElementColor(this.value)">
+                        <div class="color-presets">
+                            <div class="color-preset" style="background: #6366f1" onclick="updateElementColor('#6366f1')"></div>
+                            <div class="color-preset" style="background: #ff6b6b" onclick="updateElementColor('#ff6b6b')"></div>
+                            <div class="color-preset" style="background: #4ecdc4" onclick="updateElementColor('#4ecdc4')"></div>
+                            <div class="color-preset" style="background: #ffe66d" onclick="updateElementColor('#ffe66d')"></div>
+                            <div class="color-preset" style="background: #f7f7f7" onclick="updateElementColor('#f7f7f7')"></div>
+                            <div class="color-preset" style="background: #2c3e50" onclick="updateElementColor('#2c3e50')"></div>
+                        </div>
+                        <label class="property-label" style="margin-top: 12px;">الشفافية</label>
+                        <input type="range" min="0" max="100" value="100" 
+                            onchange="updateElementOpacity(this.value)">
+                    </div>
+                `;
+            }
+            
+            // خصائص النص
+            if (type === 'text') {
+                html += `
+                    <div class="property-group">
+                        <div class="section-title">خصائص النص</div>
+                        <label class="property-label">حجم الخط</label>
+                        <input type="number" class="property-input" 
+                            value="${parseInt(computedStyle.fontSize)}" 
+                            onchange="updateFontSize(this.value)">
+                        <label class="property-label" style="margin-top: 12px;">لون النص</label>
+                        <input type="color" value="${rgbToHex(computedStyle.color) || '#0f172a'}" 
+                            onchange="updateTextColor(this.value)">
+                        <label class="property-label" style="margin-top: 12px;">التأثيرات</label>
+                        <div class="text-effects">
+                            <button class="effect-btn" onclick="toggleTextEffect('bold')">عريض</button>
+                            <button class="effect-btn" onclick="toggleTextEffect('italic')">مائل</button>
+                            <button class="effect-btn" onclick="toggleTextEffect('underline')">تسطير</button>
+                            <button class="effect-btn" onclick="toggleTextEffect('shadow')">ظل</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // الحدود والظل
+            html += `
+                <div class="property-group">
+                    <div class="section-title">الحدود والظل</div>
+                    <label class="property-label">عرض الحد</label>
+                    <input type="number" class="property-input" value="0" 
+                        onchange="updateBorderWidth(this.value)">
+                    <label class="property-label" style="margin-top: 12px;">لون الحد</label>
+                    <input type="color" value="#334155" onchange="updateBorderColor(this.value)">
+                    <label class="property-label" style="margin-top: 12px;">نصف قطر الدوران</label>
+                    <input type="range" min="0" max="100" value="0" 
+                        onchange="updateBorderRadius(this.value)">
+                </div>
+            `;
+            
+            // الطبقات
+            html += `
+                <div class="property-group">
+                    <div class="section-title">الطبقات</div>
+                    <div class="layer-controls">
+                        <button class="layer-btn" onclick="bringForward()">⬆ للأمام</button>
+                        <button class="layer-btn" onclick="sendBackward()">⬇ للخلف</button>
+                    </div>
+                    <div class="layer-controls" style="margin-top: 8px;">
+                        <button class="layer-btn" onclick="bringToFront()">⏫ أولاً</button>
+                        <button class="layer-btn" onclick="sendToBack()">⏬ أخيراً</button>
+                    </div>
+                </div>
+            `;
+            
+            // الحذف
+            html += `
+                <div class="property-group">
+                    <button class="btn btn-secondary" style="width: 100%; background: #ef4444; color: white;" 
+                        onclick="deleteElement()">🗑️ حذف العنصر</button>
+                </div>
+            `;
+            
+            document.getElementById('propertiesContent').innerHTML = html;
+        }
+
+        // دوال التحديث
+        function updateElementSize(prop, value) {
+            if (!selectedElement) return;
+            selectedElement.style[prop] = value + 'px';
+            updateDimensions();
+        }
+
+        function updateElementPos(prop, value) {
+            if (!selectedElement) return;
+            selectedElement.style[prop] = value + 'px';
+        }
+
+        function updateElementRotation(deg) {
+            if (!selectedElement) return;
+            selectedElement.style.transform = `rotate(${deg}deg)`;
+        }
+
+        function updateElementColor(color) {
+            if (!selectedElement) return;
+            if (selectedElement.dataset.shapeType === 'triangle') {
+                selectedElement.style.borderBottomColor = color;
+            } else {
+                selectedElement.style.background = color;
+            }
+        }
+
+        function updateElementOpacity(value) {
+            if (!selectedElement) return;
+            selectedElement.style.opacity = value / 100;
+        }
+
+        function updateFontSize(size) {
+            if (!selectedElement) return;
+            selectedElement.style.fontSize = size + 'px';
+        }
+
+        function updateTextColor(color) {
+            if (!selectedElement) return;
+            selectedElement.style.color = color;
+        }
+
+        function toggleTextEffect(effect) {
+            if (!selectedElement) return;
+            if (effect === 'bold') {
+                selectedElement.style.fontWeight = selectedElement.style.fontWeight === 'bold' ? 'normal' : 'bold';
+            } else if (effect === 'italic') {
+                selectedElement.style.fontStyle = selectedElement.style.fontStyle === 'italic' ? 'normal' : 'italic';
+            } else if (effect === 'underline') {
+                selectedElement.style.textDecoration = selectedElement.style.textDecoration === 'underline' ? 'none' : 'underline';
+            } else if (effect === 'shadow') {
+                selectedElement.style.textShadow = selectedElement.style.textShadow ? '' : '2px 2px 4px rgba(0,0,0,0.3)';
+            }
+        }
+
+        function updateBorderWidth(width) {
+            if (!selectedElement) return;
+            selectedElement.style.borderWidth = width + 'px';
+            selectedElement.style.borderStyle = 'solid';
+        }
+
+        function updateBorderColor(color) {
+            if (!selectedElement) return;
+            selectedElement.style.borderColor = color;
+        }
+
+        function updateBorderRadius(radius) {
+            if (!selectedElement) return;
+            selectedElement.style.borderRadius = radius + 'px';
+        }
+
+        // طبقات
+        function bringForward() {
+            if (!selectedElement) return;
+            const currentZ = parseInt(selectedElement.style.zIndex) || 1;
+            selectedElement.style.zIndex = currentZ + 1;
+        }
+
+        function sendBackward() {
+            if (!selectedElement) return;
+            const currentZ = parseInt(selectedElement.style.zIndex) || 1;
+            selectedElement.style.zIndex = Math.max(1, currentZ - 1);
+        }
+
+        function bringToFront() {
+            if (!selectedElement) return;
+            let maxZ = 1;
+            document.querySelectorAll('.canvas-element').forEach(el => {
+                maxZ = Math.max(maxZ, parseInt(el.style.zIndex) || 1);
+            });
+            selectedElement.style.zIndex = maxZ + 1;
+        }
+
+        function sendToBack() {
+            if (!selectedElement) return;
+            selectedElement.style.zIndex = 1;
+        }
+
+        function deleteElement() {
+            if (!selectedElement) return;
+            selectedElement.remove();
+            selectedElement = null;
+            document.getElementById('propertiesContent').innerHTML = `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                    اختر عنصراً للتعديل
+                </div>
+            `;
+            saveHistory();
+        }
+
+        // السحب والإفلات
+        function startDrag(e, element) {
+            if (e.target.classList.contains('handle')) return;
+            
+            isDragging = true;
+            selectElement(element);
+            
+            startX = e.clientX - element.offsetLeft;
+            startY = e.clientY - element.offsetTop;
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        function drag(e) {
+            if (!isDragging || !selectedElement) return;
+            
+            const canvas = document.getElementById('canvas');
+            let x = e.clientX - startX;
+            let y = e.clientY - startY;
+            
+            // التقاط للشبكة
+            if (document.getElementById('gridOverlay').classList.contains('visible')) {
+                x = Math.round(x / 20) * 20;
+                y = Math.round(y / 20) * 20;
+            }
+            
+            // الحدود
+            x = Math.max(0, Math.min(x, canvas.offsetWidth - selectedElement.offsetWidth));
+            y = Math.max(0, Math.min(y, canvas.offsetHeight - selectedElement.offsetHeight));
+            
+            selectedElement.style.left = x + 'px';
+            selectedElement.style.top = y + 'px';
+            
+            updatePropertiesPanel();
+        }
+
+        function stopDrag() {
+            if (isDragging) {
+                isDragging = false;
+                saveHistory();
+            }
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+
+        // التحجيم
+        function startResize(e, element, handle) {
+            e.stopPropagation();
+            isResizing = true;
+            currentHandle = handle;
+            
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = element.offsetWidth;
+            startHeight = element.offsetHeight;
+            startLeft = element.offsetLeft;
+            startTop = element.offsetTop;
+            
+            document.addEventListener('mousemove', resize);
+            document.addEventListener('mouseup', stopResize);
+        }
+
+        function resize(e) {
+            if (!isResizing || !selectedElement) return;
+            
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            
+            if (currentHandle.includes('e')) {
+                selectedElement.style.width = Math.max(20, startWidth + dx) + 'px';
+            }
+            if (currentHandle.includes('s')) {
+                selectedElement.style.height = Math.max(20, startHeight + dy) + 'px';
+            }
+            if (currentHandle.includes('w')) {
+                const newWidth = Math.max(20, startWidth - dx);
+                selectedElement.style.width = newWidth + 'px';
+                selectedElement.style.left = (startLeft + startWidth - newWidth) + 'px';
+            }
+            if (currentHandle.includes('n')) {
+                const newHeight = Math.max(20, startHeight - dy);
+                selectedElement.style.height = newHeight + 'px';
+                selectedElement.style.top = (startTop + startHeight - newHeight) + 'px';
+            }
+            
+            updateDimensions();
+            updatePropertiesPanel();
+        }
+
+        function stopResize() {
+            if (isResizing) {
+                isResizing = false;
+                saveHistory();
+            }
+            document.removeEventListener('mousemove', resize);
+            document.removeEventListener('mouseup', stopResize);
+        }
+
+        function updateDimensions() {
+            if (!selectedElement) return;
+            const dims = selectedElement.querySelector('.dimensions');
+            if (dims) {
+                dims.textContent = `${Math.round(selectedElement.offsetWidth)} × ${Math.round(selectedElement.offsetHeight)}`;
+            }
+        }
+
+        // الخلفية
+        function setBackground(value) {
+            document.getElementById('canvas').style.background = value;
+            saveHistory();
+        }
+
+        function setBackgroundPattern() {
+            const canvas = document.getElementById('canvas');
+            canvas.style.background = `
+                radial-gradient(circle, #ff6b6b 20%, transparent 20%),
+                radial-gradient(circle, #4ecdc4 20%, transparent 20%) 50px 50px
+            `;
+            canvas.style.backgroundSize = '100px 100px';
+            canvas.style.backgroundColor = '#f0f0f0';
+            saveHistory();
+        }
+
+        // الشبكة
+        function toggleGrid() {
+            document.getElementById('gridOverlay').classList.toggle('visible');
+        }
+
+        // التاريخ
+        function saveHistory() {
+            const canvas = document.getElementById('canvas');
+            history = history.slice(0, historyStep + 1);
+            history.push(canvas.innerHTML);
+            historyStep++;
+        }
+
+        function undo() {
+            if (historyStep > 0) {
+                historyStep--;
+                document.getElementById('canvas').innerHTML = history[historyStep];
+                reattachEvents();
+            }
+        }
+
+        function redo() {
+            if (historyStep < history.length - 1) {
+                historyStep++;
+                document.getElementById('canvas').innerHTML = history[historyStep];
+                reattachEvents();
+            }
+        }
+
+        function reattachEvents() {
+            document.querySelectorAll('.canvas-element').forEach(el => {
+                addResizeHandles(el);
+            });
+        }
+
+        // مساعدات
+        function rgbToHex(rgb) {
+            if (!rgb || rgb === 'transparent') return '#6366f1';
+            const result = rgb.match(/\d+/g);
+            if (!result) return '#6366f1';
+            return '#' + result.map(x => {
+                const hex = parseInt(x).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
+
+        function changeFont(font) {
+            if (selectedElement && selectedElement.dataset.type === 'text') {
+                selectedElement.style.fontFamily = font;
+                document.getElementById('fontPreview').style.fontFamily = font;
+            }
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const canvas = document.getElementById('canvas');
+                    const element = document.createElement('div');
+                    element.className = 'canvas-element';
+                    element.id = `element-${++elementCounter}`;
+                    
+                    element.style.width = '300px';
+                    element.style.height = '200px';
+                    element.style.left = '250px';
+                    element.style.top = '200px';
+                    element.style.backgroundImage = `url(${event.target.result})`;
+                    element.style.backgroundSize = 'cover';
+                    element.style.backgroundPosition = 'center';
+                    element.dataset.type = 'image';
+                    
+                    addResizeHandles(element);
+                    canvas.appendChild(element);
+                    selectElement(element);
+                    saveHistory();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function exportDesign() {
+            alert('جاري تصدير التصميم... (هذه نسخة تجريبية)');
+        }
+
+        // إلغاء الاختيار عند النقر خارج العناصر
+        document.getElementById('canvas').addEventListener('mousedown', (e) => {
+            if (e.target.id === 'canvas' || e.target.id === 'gridOverlay') {
+                selectElement(null);
+            }
+        });
+
+        // اختصارات لوحة المفاتيح
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'z') {
+                e.preventDefault();
+                undo();
+            }
+            if (e.ctrlKey && e.key === 'y') {
+                e.preventDefault();
+                redo();
+            }
+            if (e.key === 'Delete' && selectedElement) {
+                deleteElement();
+            }
+        });
+
+        // تهيئة
+        saveHistory();
+    </ ‌‍
